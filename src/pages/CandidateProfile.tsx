@@ -18,18 +18,41 @@ interface Stage {
   nextStages: string[];
 }
 
+const getStatusBorderColor = (status: string) => {
+  switch (status) {
+    case "Completed":
+      return "border-green-300";
+    case "In Progress":
+      return "border-yellow-300";
+    case "Not Started":
+      return "border-gray-300";
+    default:
+      return "";
+  }
+};
+
 const StageCard: React.FC<{ stage: Stage; onUpdate: (id: string) => void }> = ({
   stage,
   onUpdate,
 }) => {
+  const borderColor = getStatusBorderColor(stage.status);
+  const isDisabled = stage.status === "Not Started";
+
   return (
-    <Card id={stage.id} className="w-64 p-4 m-4 bg-white shadow-md">
+    <Card
+      id={stage.id}
+      className={`w-64 p-4 m-4 bg-white shadow-md border-4 ${borderColor}`}
+    >
       <h3 className="font-bold mb-2">{stage.name}</h3>
       <p>Status: {stage.status}</p>
       <p>Passport: {stage.passportStatus}</p>
       <Dialog>
         <DialogTrigger asChild>
-          <Button className="mt-2 w-full" onClick={() => onUpdate(stage.id)}>
+          <Button
+            className="mt-2 w-full"
+            onClick={() => onUpdate(stage.id)}
+            disabled={isDisabled}
+          >
             Update Status
           </Button>
         </DialogTrigger>
@@ -65,14 +88,14 @@ const CandidateProfile: React.FC = () => {
       {
         id: "stage3",
         name: "Medical Check",
-        status: "Pending",
+        status: "Not Started",
         passportStatus: "out",
         nextStages: ["stage4"],
       },
       {
         id: "stage4",
         name: "Document Verification",
-        status: "Pending",
+        status: "Not Started",
         passportStatus: "in",
         nextStages: ["stage5"],
       },
@@ -102,25 +125,32 @@ const CandidateProfile: React.FC = () => {
         name: "Visa Cancellation",
         status: "Not Started",
         passportStatus: "in",
-        nextStages: [],
+        nextStages: ["stage9"],
       },
       {
-        id: "stage8",
-        name: "Visa Cancellation",
+        id: "stage9",
+        name: "Stage 9",
         status: "Not Started",
         passportStatus: "in",
-        nextStages: [],
+        nextStages: ["stage10"],
       },
       {
-        id: "stage8",
-        name: "Visa Cancellation",
+        id: "stage10",
+        name: "Stage 10",
         status: "Not Started",
         passportStatus: "in",
-        nextStages: [],
+        nextStages: ["stage11"],
       },
       {
-        id: "stage8",
-        name: "Visa Cancellation",
+        id: "stage11",
+        name: "Stage 11",
+        status: "Not Started",
+        passportStatus: "in",
+        nextStages: ["stage12"],
+      },
+      {
+        id: "stage12",
+        name: "Stage 12",
         status: "Not Started",
         passportStatus: "in",
         nextStages: [],
@@ -132,6 +162,17 @@ const CandidateProfile: React.FC = () => {
   const handleUpdateStage = (id: string) => {
     console.log("Updating stage:", id);
   };
+
+  const getRows = (stages: Stage[], cardsPerRow: number) => {
+    const rows: Stage[][] = [];
+    for (let i = 0; i < stages.length; i += cardsPerRow) {
+      const row = stages.slice(i, i + cardsPerRow);
+      rows.push(row);
+    }
+    return rows;
+  };
+
+  const rows = getRows(stages, 4);
 
   return (
     <section className="w-full">
@@ -147,13 +188,23 @@ const CandidateProfile: React.FC = () => {
           className="relative p-4 overflow-auto"
           style={{ minHeight: "60vh" }}
         >
-          <div className="flex flex-wrap justify-center">
-            {stages.map((stage) => (
-              <StageCard
-                key={stage.id}
-                stage={stage}
-                onUpdate={handleUpdateStage}
-              />
+          <div className="flex flex-col space-y-4">
+            {rows.map((row, rowIndex) => (
+              <div
+                key={rowIndex}
+                className="flex flex-wrap justify-center"
+                style={{
+                  flexDirection: rowIndex % 2 === 1 ? "row-reverse" : "row",
+                }}
+              >
+                {row.map((stage) => (
+                  <StageCard
+                    key={stage.id}
+                    stage={stage}
+                    onUpdate={handleUpdateStage}
+                  />
+                ))}
+              </div>
             ))}
           </div>
           {stages.map((stage) =>
