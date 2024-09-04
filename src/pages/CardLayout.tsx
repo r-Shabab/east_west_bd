@@ -33,6 +33,7 @@ type StatusOption = {
   label: string;
   color: string;
   textColor: string;
+  borderColor: string;
   bgColor: string;
 };
 
@@ -57,57 +58,66 @@ const statusIcons: StatusIcons = {
 const statusOptions: StatusOption[] = [
   {
     label: 'Unavailable',
-    color: '#357EC7',
-    textColor: 'text-blue-500',
-    bgColor: 'bg-blue-500/20',
+    color: '#808080', // Gray
+    textColor: 'text-gray-500',
+    borderColor: 'border-gray-500',
+    bgColor: 'bg-gray-100',
   },
   {
     label: 'Idle',
-    color: '#BFBFBF',
-    textColor: 'text-gray-500',
-    bgColor: 'bg-gray-500/20',
+    color: '#4B0082', // Indigo
+    textColor: 'text-indigo-400',
+    borderColor: 'border-indigo-400',
+    bgColor: 'bg-indigo-100',
   },
   {
     label: 'Active',
-    color: '#FFFFFF',
-    textColor: 'text-black',
-    bgColor: 'bg-gray-200/20',
+    color: '#008080', // Teal
+    textColor: 'text-teal-700',
+    borderColor: 'border-teal-700',
+    bgColor: 'bg-teal-100',
   },
   {
     label: 'Elevated',
-    color: '#FEF250',
-    textColor: 'text-yellow-500',
-    bgColor: 'bg-yellow-500/20',
+    color: '#FFD700', // Yellow
+    textColor: 'text-yellow-700',
+    borderColor: 'border-yellow-700',
+    bgColor: 'bg-yellow-100',
   },
   {
     label: 'High',
-    color: '#FFA500',
-    textColor: 'text-orange-500',
-    bgColor: 'bg-orange-500/20',
+    color: '#FFA500', // Orange
+    textColor: 'text-orange-700',
+    borderColor: 'border-orange-700',
+    bgColor: 'bg-orange-100',
   },
   {
     label: 'Severe',
-    color: '#D70000',
-    textColor: 'text-red-500',
-    bgColor: 'bg-red-500/20',
+    color: '#FF0000', // Red
+    textColor: 'text-red-700',
+    borderColor: 'border-red-700',
+    bgColor: 'bg-red-100',
   },
   {
     label: 'Completed',
-    color: '#008000',
-    textColor: 'text-green-500',
-    bgColor: 'bg-green-500/20',
+    color: '#6495ED', // Green
+    textColor: 'text-blue-700',
+    borderColor: 'border-blue-700',
+    bgColor: 'bg-blue-100',
   },
   {
     label: 'Paused',
-    color: '#9848B4',
-    textColor: 'text-purple-500',
-    bgColor: 'bg-purple-500/20',
+    color: '#800080', // Purple
+    textColor: 'text-purple-700',
+    borderColor: 'border-purple-700',
+    bgColor: 'bg-purple-100',
   },
   {
     label: 'Terminated',
-    color: '#000000',
-    textColor: 'text-black',
-    bgColor: 'bg-black/20',
+    color: '#000000', // Black (added as it wasn't in the original list)
+    textColor: 'text-gray-900',
+    borderColor: 'border-gray-900',
+    bgColor: 'bg-gray-300',
   },
 ];
 
@@ -167,12 +177,10 @@ const CardLayout: React.FC = () => {
       />
 
       <Card
-        className={`w-96 flex-col space-y-4 p-4 m-4 bg-white shadow-md border-4 cursor-pointer`}
-        style={{
-          borderColor: statusOptions.find(
-            (option) => option.label === selectedStatus
-          )?.color,
-        }}
+        className={`w-96 flex-col space-y-4 p-4 m-4  shadow-md border-4 cursor-pointer ${
+          statusOptions.find((option) => option.label === selectedStatus)
+            ?.borderColor
+        }`}
         onClick={() => setIsDialogOpen(true)}
       >
         <div className="flex space-x-4">
