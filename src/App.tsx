@@ -1,10 +1,13 @@
-import "./App.css";
-import CandidateProfile from "./pages/CandidateProfile";
-
+import './App.css';
+// import CandidateProfile from './pages/CandidateProfile';
+// import CandidateProfileFlow from './pages/CandidateProfileFlow';
+import CreateTemplate from './pages/CreateTemplate';
 function App() {
   return (
     <>
-      <CandidateProfile></CandidateProfile>
+      {/* <CandidateProfile></CandidateProfile>
+      <CandidateProfileFlow></CandidateProfileFlow> */}
+      <CreateTemplate></CreateTemplate>
     </>
   );
 }

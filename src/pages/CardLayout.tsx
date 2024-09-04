@@ -1,0 +1,280 @@
+import React, { useState, ChangeEvent } from 'react';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Handle, Position } from '@xyflow/react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
+} from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Separator } from '@/components/ui/separator';
+import { CgBlock as UnavailableIcon } from 'react-icons/cg';
+import { TbHourglassEmpty as IdleIcon } from 'react-icons/tb';
+import { MdPlayCircleOutline as ActiveIcon } from 'react-icons/md';
+import { IoArrowUpCircle as ElevatedIcon } from 'react-icons/io5';
+import { FaExclamationCircle as HighIcon } from 'react-icons/fa';
+import { AiFillAlert as SevereIcon } from 'react-icons/ai';
+import { FiCheckCircle as CompletedIcon } from 'react-icons/fi';
+import { IoPauseCircle as PausedIcon } from 'react-icons/io5';
+import { MdCancelPresentation as CanceledIcon } from 'react-icons/md';
+import { IconType } from 'react-icons';
+
+// Define a type for the status options
+type StatusOption = {
+  label: string;
+  color: string;
+  textColor: string;
+  bgColor: string;
+};
+
+// Define a type for the status icons
+type StatusIcons = {
+  [key: string]: IconType;
+};
+
+// Map status labels to icons
+const statusIcons: StatusIcons = {
+  Unavailable: UnavailableIcon,
+  Idle: IdleIcon,
+  Active: ActiveIcon,
+  Elevated: ElevatedIcon,
+  High: HighIcon,
+  Severe: SevereIcon,
+  Completed: CompletedIcon,
+  Paused: PausedIcon,
+  Terminated: CanceledIcon,
+};
+
+const statusOptions: StatusOption[] = [
+  {
+    label: 'Unavailable',
+    color: '#357EC7',
+    textColor: 'text-blue-500',
+    bgColor: 'bg-blue-500/20',
+  },
+  {
+    label: 'Idle',
+    color: '#BFBFBF',
+    textColor: 'text-gray-500',
+    bgColor: 'bg-gray-500/20',
+  },
+  {
+    label: 'Active',
+    color: '#FFFFFF',
+    textColor: 'text-black',
+    bgColor: 'bg-gray-200/20',
+  },
+  {
+    label: 'Elevated',
+    color: '#FEF250',
+    textColor: 'text-yellow-500',
+    bgColor: 'bg-yellow-500/20',
+  },
+  {
+    label: 'High',
+    color: '#FFA500',
+    textColor: 'text-orange-500',
+    bgColor: 'bg-orange-500/20',
+  },
+  {
+    label: 'Severe',
+    color: '#D70000',
+    textColor: 'text-red-500',
+    bgColor: 'bg-red-500/20',
+  },
+  {
+    label: 'Completed',
+    color: '#008000',
+    textColor: 'text-green-500',
+    bgColor: 'bg-green-500/20',
+  },
+  {
+    label: 'Paused',
+    color: '#9848B4',
+    textColor: 'text-purple-500',
+    bgColor: 'bg-purple-500/20',
+  },
+  {
+    label: 'Terminated',
+    color: '#000000',
+    textColor: 'text-black',
+    bgColor: 'bg-black/20',
+  },
+];
+
+const passportOptions = [
+  { label: 'Passport In', value: 'in' },
+  { label: 'Passport Out', value: 'out' },
+];
+
+const CardLayout: React.FC = () => {
+  const [selectedStatus, setSelectedStatus] = useState<string>('Active');
+  const [selectedPassportStatus, setSelectedPassportStatus] =
+    useState<string>('in');
+  const [textFieldValue, setTextFieldValue] = useState<string>('');
+  const [file, setFile] = useState<File | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
+  const [tempStatus, setTempStatus] = useState<string>('Active');
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const selectedOption = statusOptions.find(
+    (option) => option.label === tempStatus
+  );
+
+  const handleStatusChange = (value: string) => {
+    setTempStatus(value);
+  };
+
+  const handlePassportStatusChange = (value: string) => {
+    setSelectedPassportStatus(value);
+  };
+
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setFile(e.target.files[0]);
+    }
+  };
+
+  const handleUpdateClick = () => {
+    setSelectedStatus(tempStatus);
+    console.log(`Status updated to: ${tempStatus}`);
+    console.log(`Passport status: ${selectedPassportStatus}`);
+    console.log(`Additional info: ${textFieldValue}`);
+    if (file) {
+      console.log(`File selected: ${file.name}`);
+    }
+    setIsDialogOpen(false);
+  };
+
+  // Get the icon for the current status
+  const StatusIcon = statusIcons[selectedStatus] || ActiveIcon;
+
+  return (
+    <>
+      <Handle
+        type="target"
+        position={Position.Top}
+        style={{ background: '#555' }}
+      />
+
+      <Card
+        className={`w-96 flex-col space-y-4 p-4 m-4 bg-white shadow-md border-4 cursor-pointer`}
+        style={{
+          borderColor: statusOptions.find(
+            (option) => option.label === selectedStatus
+          )?.color,
+        }}
+        onClick={() => setIsDialogOpen(true)}
+      >
+        <div className="flex space-x-4">
+          <div
+            className={`w-20 h-20 rounded-md flex items-center justify-center ${
+              statusOptions.find((option) => option.label === selectedStatus)
+                ?.bgColor
+            }`}
+          >
+            <StatusIcon
+              className={`w-12 h-12 ${
+                statusOptions.find((option) => option.label === selectedStatus)
+                  ?.textColor
+              }`}
+            />
+          </div>
+          <div className="flex-col space-y-2">
+            <h3 className="font-bold mb-2 text-2xl">Stage Name</h3>
+            <Separator />
+            <p className={`text-lg font-semibold `}>
+              Status:{' '}
+              <span
+                className={
+                  statusOptions.find(
+                    (option) => option.label === selectedStatus
+                  )?.textColor
+                }
+              >
+                {selectedStatus}
+              </span>
+            </p>
+          </div>
+        </div>
+      </Card>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Update Stage: Stage Name</DialogTitle>
+          </DialogHeader>
+          <div className="mt-4">
+            <div className="mb-4">
+              <Select value={tempStatus} onValueChange={handleStatusChange}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {statusOptions.map((option) => (
+                    <SelectItem key={option.label} value={option.label}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="mb-4">
+              <Select
+                value={selectedPassportStatus}
+                onValueChange={handlePassportStatusChange}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select passport status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {passportOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="mb-4">
+              <Input
+                type="text"
+                placeholder="Additional Information"
+                value={textFieldValue}
+                onChange={(e) => setTextFieldValue(e.target.value)}
+                className="w-full h-16"
+              />
+            </div>
+            <div className="mb-4">
+              <input
+                type="file"
+                onChange={handleFileChange}
+                className="w-full"
+              />
+            </div>
+            <Button className="mt-2 w-full" onClick={handleUpdateClick}>
+              Update Status
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        style={{ background: '#555' }}
+      />
+    </>
+  );
+};
+
+export default CardLayout;
