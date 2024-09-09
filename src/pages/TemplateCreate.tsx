@@ -19,13 +19,22 @@ import ReactFlow, {
   getBezierPath,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
+import { LuSearchX as SearchFailed } from 'react-icons/lu';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { IoSearch as Search } from 'react-icons/io5';
 import { IoClose as Close } from 'react-icons/io5';
-import { LuSearchX as SearchFailed } from 'react-icons/lu';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 // Define the structure for a node
 interface NodeData {
@@ -45,11 +54,18 @@ interface CustomEdgeData {
   onDelete: (id: string) => void;
 }
 
+interface CustomNode {
+  id: string;
+  position: { x: number; y: number };
+  data: CustomNodeData;
+  label?: string; // Ensure label is defined if you are using it.
+}
+
 // Sample nodes data based on recruitment stages
 const initialNodes: NodeData[] = [
   {
     id: '1',
-    title: 'Application Received',
+    title: 'Application Received and Not Received Maybe Received',
     description: 'The candidate’s application has been received.',
   },
   {
@@ -156,22 +172,22 @@ const CustomEdge: React.FC<EdgeProps<CustomEdgeData>> = ({
         d={edgePath}
       />
       <foreignObject
-        width={20}
-        height={20}
-        x={labelX - 10}
-        y={labelY - 10}
+        width={25}
+        height={25}
+        x={labelX - 12.5}
+        y={labelY - 12.5}
         className="edgebutton-foreignobject"
         requiredExtensions="http://www.w3.org/1999/xhtml"
       >
         <body>
           <button
-            className="edgebutton rounded-full w-5 h-5 flex items-center justify-center bg-slate-300 hover:bg-red-400 hover:text-white"
+            className="edgebutton flex h-6 w-6 items-center justify-center rounded-full bg-gray-300 transition-all ease-in-out hover:bg-red-400 hover:text-white"
             onClick={(event) => {
               event.stopPropagation();
               data?.onDelete(id);
             }}
           >
-            <Close size={14} />
+            <Close size={16} className="text-bold" />
           </button>
         </body>
       </foreignObject>
@@ -181,20 +197,20 @@ const CustomEdge: React.FC<EdgeProps<CustomEdgeData>> = ({
 
 const CustomNode: React.FC<NodeProps<CustomNodeData>> = ({ data, id }) => {
   return (
-    <div className="relative bg-white border-2 border-gray-200 rounded-xl p-4 px-6 shadow-lg">
+    <div className="shadow-l relative w-96 rounded-xl border-2 border-gray-200 bg-white p-6 transition-all duration-150 ease-in-out hover:cursor-grab hover:shadow-md">
       <Handle
         type="target"
-        className="absolute -top-2 w-3 h-3 hover:cursor-pointer"
+        className="absolute -top-2 h-3.5 w-3.5 bg-gray-700"
         position={Position.Top}
       />
-      <h3 className="text-lg font-semibold">{data.label}</h3>
+      <h3 className="text-center text-xl font-semibold">{data.label}</h3>
       <Handle
         type="source"
-        className="absolute -bottom-2 w-3 h-3"
+        className="absolute -bottom-2 h-3.5 w-3.5 bg-gray-700"
         position={Position.Bottom}
       />
       <button
-        className="absolute -top-0 right-0 bg-slate-500 hover:bg-red-400 text-white rounded-full w-5 h-5 flex items-center justify-center"
+        className="absolute right-0.5 top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-gray-400 text-white transition-colors duration-150 hover:bg-red-400"
         onClick={() => data.onDelete(id)}
       >
         <Close size={14} />
@@ -212,33 +228,106 @@ const edgeTypes: EdgeTypes = {
 };
 
 let id = 0;
-const getId = () => `dndnode_${id++}`;
+const getId = (label: string) =>
+  `${label.replace(/\s+/g, '_').toLowerCase()}_${id++}`;
 
 const TemplateCreate: React.FC = () => {
-  const [nodes, setNodes, onNodesChange] = useNodesState<Node<CustomNodeData>>(
-    []
-  );
+  const [nodes, setNodes, onNodesChange] = useNodesState<CustomNode>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge<CustomEdgeData>>(
-    []
+    [],
   );
   const [reactFlowInstance, setReactFlowInstance] =
     useState<ReactFlowInstance | null>(null);
   const [sidebarNodes, setSidebarNodes] = useState<NodeData[]>(initialNodes);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<'save' | 'cancel' | null>(
+    null,
+  );
+  const [templateName, setTemplateName] = useState('');
 
   const filteredNodes = useMemo(() => {
     return sidebarNodes.filter(
       (node) =>
         node.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        node.description.toLowerCase().includes(searchTerm.toLowerCase())
+        node.description.toLowerCase().includes(searchTerm.toLowerCase()),
     );
   }, [sidebarNodes, searchTerm]);
+
+  const openConfirmDialog = (action: 'save' | 'cancel') => {
+    setConfirmAction(action);
+    setIsConfirmDialogOpen(true);
+  };
+
+  const closeConfirmDialog = () => {
+    setIsConfirmDialogOpen(false);
+    setConfirmAction(null);
+    setTemplateName('');
+  };
+
+  const handleConfirm = () => {
+    if (confirmAction === 'save') {
+      handleSave();
+    } else if (confirmAction === 'cancel') {
+      handleCancel();
+    }
+    closeConfirmDialog();
+  };
+
+  const handleSave = () => {
+    if (nodes.length === 0) {
+      toast.error('Cannot save an empty canvas.', { position: 'top-right' });
+      return;
+    }
+    if (reactFlowInstance) {
+      const flow = reactFlowInstance.toObject();
+      const filteredFlow = {
+        nodes: flow.nodes.map((node) => ({
+          id: node.id,
+          type: node.type,
+          data: { label: (node.data as CustomNodeData).label },
+          position: node.position,
+        })),
+        edges: flow.edges.map((edge) => ({
+          id: edge.id,
+          source: edge.source,
+          target: edge.target,
+          type: edge.type,
+        })),
+      };
+      console.log(JSON.stringify(filteredFlow, null, 2));
+      toast.success(`Template "${templateName}" has been saved successfully.`, {
+        position: 'top-right',
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+    }
+  };
+
+  const handleCancel = () => {
+    // Reset the state or navigate away
+    setNodes([]);
+    setEdges([]);
+    setSidebarNodes(initialNodes);
+    toast.warning('Your changes have been discarded.', {
+      position: 'top-right',
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+    });
+    closeConfirmDialog();
+  };
 
   const onEdgeDelete = useCallback(
     (edgeId: string) => {
       setEdges((eds) => eds.filter((e) => e.id !== edgeId));
     },
-    [setEdges]
+    [setEdges],
   );
 
   const onConnect: OnConnect = useCallback(
@@ -255,7 +344,7 @@ const TemplateCreate: React.FC = () => {
       };
       setEdges((eds) => addEdge(edge, eds));
     },
-    [setEdges, onEdgeDelete]
+    [setEdges, onEdgeDelete],
   );
 
   const onNodeDelete = useCallback(
@@ -263,28 +352,32 @@ const TemplateCreate: React.FC = () => {
       setNodes((nds) => {
         const deletedNode = nds.find((n) => n.id === nodeId);
         if (deletedNode) {
-          setSidebarNodes((prev) => [
-            ...prev,
-            {
+          setSidebarNodes((prev) => {
+            const index = initialNodes.findIndex(
+              (n) => n.title === deletedNode.data.label,
+            );
+            const newSidebarNodes = [...prev];
+            newSidebarNodes.splice(index, 0, {
               id: deletedNode.id,
               title: deletedNode.data.label,
               description: '',
-            },
-          ]);
+            });
+            return newSidebarNodes;
+          });
         }
         return nds.filter((n) => n.id !== nodeId);
       });
       setEdges((eds) =>
-        eds.filter((e) => e.source !== nodeId && e.target !== nodeId)
+        eds.filter((e) => e.source !== nodeId && e.target !== nodeId),
       );
     },
-    [setNodes, setEdges]
+    [setNodes, setEdges],
   );
 
   // Handle dragging nodes from sidebar
   const onDragStart = (
     event: React.DragEvent<HTMLDivElement>,
-    node: NodeData
+    node: NodeData,
   ) => {
     event.dataTransfer.setData('application/reactflow', JSON.stringify(node));
     event.dataTransfer.effectAllowed = 'move';
@@ -298,22 +391,22 @@ const TemplateCreate: React.FC = () => {
       const nodeDataStr = event.dataTransfer.getData('application/reactflow');
       const nodeData = JSON.parse(nodeDataStr) as NodeData;
 
-      const position = reactFlowInstance?.project({
+      const position = reactFlowInstance?.screenToFlowPosition({
         x: event.clientX - reactFlowBounds.left,
         y: event.clientY - reactFlowBounds.top,
       });
 
       const newNode: Node<CustomNodeData> = {
-        id: getId(),
+        id: getId(nodeData.title),
         type: 'custom',
-        position: position || { x: 0, y: 100 },
+        position: position || { x: 0, y: 0 },
         data: { label: nodeData.title, onDelete: onNodeDelete },
       };
 
       setNodes((nds) => nds.concat(newNode));
       setSidebarNodes((prev) => prev.filter((n) => n.id !== nodeData.id));
     },
-    [reactFlowInstance, setNodes, onNodeDelete]
+    [reactFlowInstance, setNodes, onNodeDelete],
   );
 
   const onDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
@@ -321,37 +414,30 @@ const TemplateCreate: React.FC = () => {
     event.dataTransfer.dropEffect = 'move';
   }, []);
 
-  const onSave = useCallback(() => {
-    if (reactFlowInstance) {
-      const flow = reactFlowInstance.toObject();
-      console.log(JSON.stringify(flow, null, 2));
-    }
-  }, [reactFlowInstance]);
-
   return (
     <div className="flex h-screen">
       {/* Sidebar */}
-      <div className="w-2/12 border-r border-gray-200 p-4 bg-gray-50">
-        <div className="mb-4 relative">
+      <div className="w-2/12 border-r border-gray-200 bg-gray-200 p-4">
+        <div className="relative mb-4">
           <Input
             type="text"
             placeholder="Search stages..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-12 h-14 text-xl shadow-sm"
+            className="h-12 w-full rounded-lg bg-slate-50 pl-12 text-lg shadow-sm transition-all duration-150 focus:ring focus:ring-blue-300"
           />
           <Search
-            size={24}
-            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+            size={20}
+            className="absolute left-3 top-1/2 -translate-y-1/2 transform text-gray-400"
           />
         </div>
 
         <ScrollArea className="h-[calc(100vh-120px)]">
           {/* Check if filteredNodes is empty */}
           {filteredNodes.length === 0 ? (
-            <div className="flex flex-col mt-10 items-center space-y-4">
-              <SearchFailed size={64} />
-              <p className="text-center text-gray-500 ">
+            <div className="mt-20 flex flex-col items-center space-y-4 px-6">
+              <SearchFailed size={64} className="text-gray-300" />
+              <p className="text-center text-gray-400">
                 Sorry, we couldn't find any results
               </p>
             </div>
@@ -359,12 +445,14 @@ const TemplateCreate: React.FC = () => {
             filteredNodes.map((node) => (
               <Card
                 key={node.id}
-                className="mb-3 cursor-grab"
+                className="mb-3 cursor-grab bg-white transition-all duration-150 ease-in-out hover:shadow-md"
                 draggable
                 onDragStart={(event) => onDragStart(event, node)}
               >
                 <CardHeader>
-                  <CardTitle className="text-lg">{node.title}</CardTitle>
+                  <CardTitle className="text-lg font-medium">
+                    {node.title}
+                  </CardTitle>
                   {/* <CardContent>
                 <p>{node.description}</p>
               </CardContent> */}
@@ -377,7 +465,7 @@ const TemplateCreate: React.FC = () => {
 
       {/* React Flow Canvas */}
       <ReactFlowProvider>
-        <div className="w-10/12 h-full">
+        <div className="h-full w-10/12">
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -390,29 +478,93 @@ const TemplateCreate: React.FC = () => {
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
             snapToGrid={true}
-            snapGrid={[150, 150]}
-            fitView
+            snapGrid={[175, 175]}
             minZoom={0.75}
-            maxZoom={2}
+            maxZoom={1.5}
+            defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+            style={{
+              backgroundColor: '#f9f9f9',
+            }}
           >
             <Background />
+
             <Controls />
           </ReactFlow>
         </div>
       </ReactFlowProvider>
 
       {/* Save and Cancel buttons */}
-      <div className="absolute bottom-4 right-4 space-x-2 ">
+      <div className="absolute bottom-5 right-10 space-x-2">
         <Button
-          className="w-36 h-12 bg-blue-600 hover:bg-blue-900 "
-          onClick={onSave}
+          className="h-14 w-44 bg-blue-600 text-base hover:bg-blue-900"
+          onClick={() => openConfirmDialog('save')}
         >
-          Save
+          Save as template
         </Button>
-        <Button className="w-32 h-12" variant="outline">
+        <Button
+          className="h-14 w-36 text-base"
+          variant="outline"
+          onClick={() => openConfirmDialog('cancel')}
+        >
           Cancel
         </Button>
       </div>
+
+      {/* Confirmation Dialog */}
+      <Dialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
+        <DialogContent aria-describedby={undefined}>
+          <DialogHeader>
+            <DialogTitle>
+              {confirmAction === 'save'
+                ? 'Save Template'
+                : 'Are you sure you want to cancel?'}
+            </DialogTitle>
+          </DialogHeader>
+          {confirmAction === 'save' && (
+            <Input
+              placeholder="Enter template name"
+              value={templateName}
+              onChange={(e) => setTemplateName(e.target.value)}
+            />
+          )}
+          <DialogFooter>
+            {confirmAction === 'save' ? (
+              <>
+                <Button
+                  className="bg-blue-600 hover:bg-blue-900"
+                  size={'lg'}
+                  onClick={handleConfirm}
+                >
+                  Save
+                </Button>
+                <Button
+                  size={'lg'}
+                  variant="outline"
+                  onClick={closeConfirmDialog}
+                >
+                  Cancel
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button size={'lg'} onClick={handleCancel}>
+                  Yes
+                </Button>
+                <Button
+                  size={'lg'}
+                  variant="outline"
+                  onClick={closeConfirmDialog}
+                >
+                  No
+                </Button>
+              </>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Toast Container */}
+      <ToastContainer />
     </div>
   );
 };
