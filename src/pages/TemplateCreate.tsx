@@ -24,6 +24,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { IoSearch as Search } from 'react-icons/io5';
+import { PiEmptyBold as Empty } from 'react-icons/pi';
 import { IoClose as Close } from 'react-icons/io5';
 import { Button } from '@/components/ui/button';
 import {
@@ -33,6 +34,12 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -46,6 +53,7 @@ interface NodeData {
 // Custom node data interface
 interface CustomNodeData {
   label: string;
+  description: string;
   onDelete: (id: string) => void;
 }
 
@@ -54,12 +62,7 @@ interface CustomEdgeData {
   onDelete: (id: string) => void;
 }
 
-interface CustomNode {
-  id: string;
-  position: { x: number; y: number };
-  data: CustomNodeData;
-  label?: string; // Ensure label is defined if you are using it.
-}
+type CustomNode = Node<CustomNodeData>;
 
 // Sample nodes data based on recruitment stages
 const initialNodes: NodeData[] = [
@@ -179,7 +182,7 @@ const CustomEdge: React.FC<EdgeProps<CustomEdgeData>> = ({
         className="edgebutton-foreignobject"
         requiredExtensions="http://www.w3.org/1999/xhtml"
       >
-        <body>
+        <div>
           <button
             className="edgebutton flex h-6 w-6 items-center justify-center rounded-full bg-gray-300 transition-all ease-in-out hover:bg-red-400 hover:text-white"
             onClick={(event) => {
@@ -189,7 +192,7 @@ const CustomEdge: React.FC<EdgeProps<CustomEdgeData>> = ({
           >
             <Close size={16} className="text-bold" />
           </button>
-        </body>
+        </div>
       </foreignObject>
     </>
   );
@@ -197,25 +200,36 @@ const CustomEdge: React.FC<EdgeProps<CustomEdgeData>> = ({
 
 const CustomNode: React.FC<NodeProps<CustomNodeData>> = ({ data, id }) => {
   return (
-    <div className="shadow-l relative w-96 rounded-xl border-2 border-gray-200 bg-white p-6 transition-all duration-150 ease-in-out hover:cursor-grab hover:shadow-md">
-      <Handle
-        type="target"
-        className="absolute -top-2 h-3.5 w-3.5 bg-gray-700"
-        position={Position.Top}
-      />
-      <h3 className="text-center text-xl font-semibold">{data.label}</h3>
-      <Handle
-        type="source"
-        className="absolute -bottom-2 h-3.5 w-3.5 bg-gray-700"
-        position={Position.Bottom}
-      />
-      <button
-        className="absolute right-0.5 top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-gray-400 text-white transition-colors duration-150 hover:bg-red-400"
-        onClick={() => data.onDelete(id)}
-      >
-        <Close size={14} />
-      </button>
-    </div>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="relative w-96 rounded-xl border-2 border-gray-200 bg-white p-6 transition-all duration-150 ease-in-out hover:cursor-grab hover:border-blue-300 hover:shadow-md">
+            <Handle
+              type="target"
+              className="absolute -top-2 h-3.5 w-3.5 bg-gray-700"
+              position={Position.Top}
+            />
+            <h3 className="text-center text-xl font-medium tracking-wide">
+              {data.label}
+            </h3>
+            <Handle
+              type="source"
+              className="absolute -bottom-2 h-3.5 w-3.5 bg-gray-700"
+              position={Position.Bottom}
+            />
+            <button
+              className="absolute right-0.5 top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-gray-400 text-white transition-colors duration-150 hover:bg-red-400"
+              onClick={() => data.onDelete(id)}
+            >
+              <Close size={14} />
+            </button>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="right" sideOffset={5}>
+          <p>{data.description}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 };
 
@@ -246,6 +260,10 @@ const TemplateCreate: React.FC = () => {
   );
   const [templateName, setTemplateName] = useState('');
 
+  const sortedSidebarNodes = useMemo(() => {
+    return [...sidebarNodes].sort((a, b) => a.title.localeCompare(b.title));
+  }, [sidebarNodes]);
+
   const filteredNodes = useMemo(() => {
     return sidebarNodes.filter(
       (node) =>
@@ -255,6 +273,7 @@ const TemplateCreate: React.FC = () => {
   }, [sidebarNodes, searchTerm]);
 
   const openConfirmDialog = (action: 'save' | 'cancel') => {
+    if (action === 'save' && !isValidTemplate()) return; // Validate template before opening modal
     setConfirmAction(action);
     setIsConfirmDialogOpen(true);
   };
@@ -274,18 +293,52 @@ const TemplateCreate: React.FC = () => {
     closeConfirmDialog();
   };
 
-  const handleSave = () => {
+  const isValidTemplate = useCallback(() => {
     if (nodes.length === 0) {
       toast.error('Cannot save an empty canvas.', { position: 'top-right' });
+      return false;
+    }
+
+    if (nodes.length === 1 && edges.length === 0) {
+      toast.error('Cannot save a single stage with no connections.', {
+        position: 'top-right',
+      });
+      return false;
+    }
+
+    const nodesWithNoSource = nodes.filter(
+      (node) => !edges.some((edge) => edge.target === node.id),
+    );
+
+    if (nodesWithNoSource.length !== 1) {
+      toast.error('Template must have exactly one starting node.', {
+        position: 'top-right',
+      });
+      return false;
+    }
+
+    return true;
+  }, [nodes, edges]);
+
+  const handleSave = () => {
+    if (!templateName) {
+      toast.error('Template name cannot be empty.', { position: 'top-right' });
       return;
     }
+    if (!isValidTemplate()) return;
+
     if (reactFlowInstance) {
       const flow = reactFlowInstance.toObject();
       const filteredFlow = {
+        templateId: getId(templateName),
+        templateName: templateName,
         nodes: flow.nodes.map((node) => ({
           id: node.id,
           type: node.type,
-          data: { label: (node.data as CustomNodeData).label },
+          data: {
+            label: (node.data as CustomNodeData).label,
+            description: (node.data as CustomNodeData).description,
+          },
           position: node.position,
         })),
         edges: flow.edges.map((edge) => ({
@@ -308,7 +361,6 @@ const TemplateCreate: React.FC = () => {
   };
 
   const handleCancel = () => {
-    // Reset the state or navigate away
     setNodes([]);
     setEdges([]);
     setSidebarNodes(initialNodes);
@@ -330,23 +382,6 @@ const TemplateCreate: React.FC = () => {
     [setEdges],
   );
 
-  const onConnect: OnConnect = useCallback(
-    (params) => {
-      if (params.source === params.target) {
-        // Prevent connecting a node to itself
-        console.log('Cannot connect a node to itself.');
-        return;
-      }
-      const edge = {
-        ...params,
-        type: 'custom',
-        data: { onDelete: onEdgeDelete },
-      };
-      setEdges((eds) => addEdge(edge, eds));
-    },
-    [setEdges, onEdgeDelete],
-  );
-
   const onNodeDelete = useCallback(
     (nodeId: string) => {
       setNodes((nds) => {
@@ -354,13 +389,16 @@ const TemplateCreate: React.FC = () => {
         if (deletedNode) {
           setSidebarNodes((prev) => {
             const index = initialNodes.findIndex(
-              (n) => n.title === deletedNode.data.label,
+              (n) =>
+                n.title ===
+                (deletedNode.data as unknown as CustomNodeData).label,
             );
             const newSidebarNodes = [...prev];
             newSidebarNodes.splice(index, 0, {
               id: deletedNode.id,
-              title: deletedNode.data.label,
-              description: '',
+              title: (deletedNode.data as unknown as CustomNodeData).label,
+              description: (deletedNode.data as unknown as CustomNodeData)
+                .description,
             });
             return newSidebarNodes;
           });
@@ -372,6 +410,24 @@ const TemplateCreate: React.FC = () => {
       );
     },
     [setNodes, setEdges],
+  );
+
+  const onConnect: OnConnect = useCallback(
+    (params) => {
+      if (params.source === params.target) {
+        toast.warn('Cannot connect a node to itself.', {
+          position: 'top-right',
+        });
+        return;
+      }
+      const edge = {
+        ...params,
+        type: 'custom',
+        data: { onDelete: onEdgeDelete },
+      };
+      setEdges((eds) => addEdge(edge, eds));
+    },
+    [setEdges, onEdgeDelete],
   );
 
   // Handle dragging nodes from sidebar
@@ -396,11 +452,15 @@ const TemplateCreate: React.FC = () => {
         y: event.clientY - reactFlowBounds.top,
       });
 
-      const newNode: Node<CustomNodeData> = {
+      const newNode: CustomNode = {
         id: getId(nodeData.title),
         type: 'custom',
         position: position || { x: 0, y: 0 },
-        data: { label: nodeData.title, onDelete: onNodeDelete },
+        data: {
+          label: nodeData.title,
+          description: nodeData.description,
+          onDelete: onNodeDelete,
+        } as CustomNodeData,
       };
 
       setNodes((nds) => nds.concat(newNode));
@@ -417,14 +477,14 @@ const TemplateCreate: React.FC = () => {
   return (
     <div className="flex h-screen">
       {/* Sidebar */}
-      <div className="w-2/12 border-r border-gray-200 bg-gray-200 p-4">
-        <div className="relative mb-4">
+      <div className="w-3/12 border-r border-gray-200 bg-gray-200 px-2 py-4 xl:w-2/12">
+        <div className="relative mx-3 mb-4">
           <Input
             type="text"
             placeholder="Search stages..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="h-12 w-full rounded-lg bg-slate-50 pl-12 text-lg shadow-sm transition-all duration-150 focus:ring focus:ring-blue-300"
+            className="h-12 w-full rounded-lg bg-slate-50 pl-10 text-sm shadow-sm transition-all duration-150 focus:ring focus:ring-blue-300 xl:pl-12 xl:text-lg"
           />
           <Search
             size={20}
@@ -432,9 +492,15 @@ const TemplateCreate: React.FC = () => {
           />
         </div>
 
-        <ScrollArea className="h-[calc(100vh-120px)]">
-          {/* Check if filteredNodes is empty */}
-          {filteredNodes.length === 0 ? (
+        <ScrollArea className="h-[calc(100vh-7rem)] px-3">
+          {sidebarNodes.length === 0 ? (
+            <div className="mt-20 flex flex-col items-center space-y-4 px-6">
+              <Empty size={64} className="text-gray-300" />
+              <p className="text-center text-gray-400">
+                No stages available. Please create a stage first.
+              </p>
+            </div>
+          ) : filteredNodes.length === 0 ? (
             <div className="mt-20 flex flex-col items-center space-y-4 px-6">
               <SearchFailed size={64} className="text-gray-300" />
               <p className="text-center text-gray-400">
@@ -442,22 +508,31 @@ const TemplateCreate: React.FC = () => {
               </p>
             </div>
           ) : (
-            filteredNodes.map((node) => (
-              <Card
-                key={node.id}
-                className="mb-3 cursor-grab bg-white transition-all duration-150 ease-in-out hover:shadow-md"
-                draggable
-                onDragStart={(event) => onDragStart(event, node)}
-              >
-                <CardHeader>
-                  <CardTitle className="text-lg font-medium">
-                    {node.title}
-                  </CardTitle>
-                  {/* <CardContent>
+            sortedSidebarNodes.map((node) => (
+              <TooltipProvider key={node.id}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Card
+                      key={node.id}
+                      className="mb-3 cursor-grab bg-white transition-all duration-150 ease-in-out hover:bg-gray-50 hover:shadow-md"
+                      draggable
+                      onDragStart={(event) => onDragStart(event, node)}
+                    >
+                      <CardHeader>
+                        <CardTitle className="text-sm font-normal xl:text-lg xl:font-medium">
+                          {node.title}
+                        </CardTitle>
+                        {/* <CardContent>
                 <p>{node.description}</p>
               </CardContent> */}
-                </CardHeader>
-              </Card>
+                      </CardHeader>
+                    </Card>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" sideOffset={10}>
+                    <p>{node.description}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             ))
           )}
         </ScrollArea>
@@ -465,7 +540,7 @@ const TemplateCreate: React.FC = () => {
 
       {/* React Flow Canvas */}
       <ReactFlowProvider>
-        <div className="h-full w-10/12">
+        <div className="h-full w-9/12 xl:w-10/12">
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -479,7 +554,7 @@ const TemplateCreate: React.FC = () => {
             edgeTypes={edgeTypes}
             snapToGrid={true}
             snapGrid={[175, 175]}
-            minZoom={0.75}
+            minZoom={0.5}
             maxZoom={1.5}
             defaultViewport={{ x: 0, y: 0, zoom: 1 }}
             style={{
@@ -487,7 +562,6 @@ const TemplateCreate: React.FC = () => {
             }}
           >
             <Background />
-
             <Controls />
           </ReactFlow>
         </div>
@@ -496,15 +570,16 @@ const TemplateCreate: React.FC = () => {
       {/* Save and Cancel buttons */}
       <div className="absolute bottom-5 right-10 space-x-2">
         <Button
-          className="h-14 w-44 bg-blue-600 text-base hover:bg-blue-900"
+          className="h-12 w-36 bg-blue-600 text-sm font-semibold transition-colors duration-200 hover:bg-blue-700 xl:h-14 xl:w-44 xl:text-base"
           onClick={() => openConfirmDialog('save')}
         >
           Save as template
         </Button>
         <Button
-          className="h-14 w-36 text-base"
+          className="h-12 w-28 border-2 text-sm font-semibold transition-colors duration-200 hover:bg-gray-100 xl:h-14 xl:w-36 xl:text-base"
           variant="outline"
           onClick={() => openConfirmDialog('cancel')}
+          disabled={nodes.length === 0}
         >
           Cancel
         </Button>
