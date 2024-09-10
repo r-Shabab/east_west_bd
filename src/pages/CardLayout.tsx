@@ -1,7 +1,9 @@
 import React, { useState, ChangeEvent } from 'react';
 import { Card } from '@/components/ui/card';
+import { Handle, Position } from 'reactflow';
 import { Button } from '@/components/ui/button';
-import { Handle, Position } from '@xyflow/react';
+import { Input } from '@/components/ui/input';
+import { Separator } from '@/components/ui/separator';
 import {
   Dialog,
   DialogContent,
@@ -15,8 +17,6 @@ import {
   SelectItem,
   SelectValue,
 } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
 import { CgBlock as UnavailableIcon } from 'react-icons/cg';
 import { TbHourglassEmpty as IdleIcon } from 'react-icons/tb';
 import { MdPlayCircleOutline as ActiveIcon } from 'react-icons/md';
@@ -135,11 +135,6 @@ const CardLayout: React.FC = () => {
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
   const [tempStatus, setTempStatus] = useState<string>('Active');
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const selectedOption = statusOptions.find(
-    (option) => option.label === tempStatus
-  );
-
   const handleStatusChange = (value: string) => {
     setTempStatus(value);
   };
@@ -177,7 +172,7 @@ const CardLayout: React.FC = () => {
       />
 
       <Card
-        className={`w-96 flex-col space-y-4 p-4 m-4  shadow-md border-4 cursor-pointer ${
+        className={`m-4 w-96 cursor-pointer flex-col space-y-4 border-4 p-4 shadow-md ${
           statusOptions.find((option) => option.label === selectedStatus)
             ?.borderColor
         }`}
@@ -185,27 +180,27 @@ const CardLayout: React.FC = () => {
       >
         <div className="flex space-x-4">
           <div
-            className={`w-20 h-20 rounded-md flex items-center justify-center ${
+            className={`flex h-20 w-20 items-center justify-center rounded-md ${
               statusOptions.find((option) => option.label === selectedStatus)
                 ?.bgColor
             }`}
           >
             <StatusIcon
-              className={`w-12 h-12 ${
+              className={`h-12 w-12 ${
                 statusOptions.find((option) => option.label === selectedStatus)
                   ?.textColor
               }`}
             />
           </div>
           <div className="flex-col space-y-2">
-            <h3 className="font-bold mb-2 text-2xl">Stage Name</h3>
+            <h3 className="mb-2 text-2xl font-bold">Stage Name</h3>
             <Separator />
-            <p className={`text-lg font-semibold `}>
+            <p className={`text-lg font-semibold`}>
               Status:{' '}
               <span
                 className={
                   statusOptions.find(
-                    (option) => option.label === selectedStatus
+                    (option) => option.label === selectedStatus,
                   )?.textColor
                 }
               >
@@ -259,7 +254,7 @@ const CardLayout: React.FC = () => {
                 placeholder="Additional Information"
                 value={textFieldValue}
                 onChange={(e) => setTextFieldValue(e.target.value)}
-                className="w-full h-16"
+                className="h-16 w-full"
               />
             </div>
             <div className="mb-4">

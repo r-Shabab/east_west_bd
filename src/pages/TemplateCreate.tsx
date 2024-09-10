@@ -294,10 +294,10 @@ const TemplateCreate: React.FC = () => {
   };
 
   const isValidTemplate = useCallback(() => {
-    if (nodes.length === 0) {
-      toast.error('Cannot save an empty canvas.', { position: 'top-right' });
-      return false;
-    }
+    // if (nodes.length === 0) {
+    //   toast.error('Cannot save an empty canvas.', { position: 'top-right' });
+    //   return false;
+    // }
 
     if (nodes.length === 1 && edges.length === 0) {
       toast.error('Cannot save a single stage with no connections.', {
@@ -334,18 +334,15 @@ const TemplateCreate: React.FC = () => {
         templateName: templateName,
         nodes: flow.nodes.map((node) => ({
           id: node.id,
-          type: node.type,
           data: {
             label: (node.data as CustomNodeData).label,
             description: (node.data as CustomNodeData).description,
           },
-          position: node.position,
         })),
         edges: flow.edges.map((edge) => ({
           id: edge.id,
           source: edge.source,
           target: edge.target,
-          type: edge.type,
         })),
       };
       console.log(JSON.stringify(filteredFlow, null, 2));
@@ -448,7 +445,7 @@ const TemplateCreate: React.FC = () => {
       const nodeData = JSON.parse(nodeDataStr) as NodeData;
 
       const position = reactFlowInstance?.screenToFlowPosition({
-        x: event.clientX - reactFlowBounds.left,
+        x: event.clientX - reactFlowBounds.top,
         y: event.clientY - reactFlowBounds.top,
       });
 
@@ -478,9 +475,14 @@ const TemplateCreate: React.FC = () => {
     (nodeData: NodeData) => {
       if (!reactFlowInstance) return;
 
-      const position = reactFlowInstance.project({
-        x: Math.random() * 500,
-        y: Math.random() * 500,
+      const screenWidth = window.innerWidth;
+      const screenHeight = window.innerHeight;
+      const centerX = screenWidth / 2;
+      const centerY = screenHeight / 2;
+
+      const position = reactFlowInstance.screenToFlowPosition({
+        x: centerX + Math.floor(Math.random() * 600) - 300,
+        y: centerY + Math.floor(Math.random() * 600) - 300,
       });
 
       const newNode: CustomNode = {
@@ -583,6 +585,9 @@ const TemplateCreate: React.FC = () => {
             snapGrid={[175, 175]}
             minZoom={0.5}
             maxZoom={1.5}
+            panOnDrag={true}
+            zoomOnScroll={false}
+            panOnScroll={true}
             defaultViewport={{ x: 0, y: 0, zoom: 1 }}
             style={{
               backgroundColor: '#f9f9f9',
@@ -595,22 +600,23 @@ const TemplateCreate: React.FC = () => {
       </ReactFlowProvider>
 
       {/* Save and Cancel buttons */}
-      <div className="absolute bottom-5 right-10 space-x-2">
-        <Button
-          className="h-12 w-36 bg-blue-600 text-sm font-semibold transition-colors duration-200 hover:bg-blue-700 xl:h-14 xl:w-44 xl:text-base"
-          onClick={() => openConfirmDialog('save')}
-        >
-          Save as template
-        </Button>
-        <Button
-          className="h-12 w-28 border-2 text-sm font-semibold transition-colors duration-200 hover:bg-gray-100 xl:h-14 xl:w-36 xl:text-base"
-          variant="outline"
-          onClick={() => openConfirmDialog('cancel')}
-          disabled={nodes.length === 0}
-        >
-          Cancel
-        </Button>
-      </div>
+      {nodes.length > 0 && (
+        <div className="absolute bottom-5 right-10 space-x-2">
+          <Button
+            className="h-12 w-36 bg-blue-600 text-sm font-semibold transition-colors duration-200 hover:bg-blue-700 xl:h-14 xl:w-44 xl:text-base"
+            onClick={() => openConfirmDialog('save')}
+          >
+            Save as template
+          </Button>
+          <Button
+            className="h-12 w-28 border-2 text-sm font-semibold transition-colors duration-200 hover:bg-gray-100 xl:h-14 xl:w-36 xl:text-base"
+            variant="outline"
+            onClick={() => openConfirmDialog('cancel')}
+          >
+            Cancel
+          </Button>
+        </div>
+      )}
 
       {/* Confirmation Dialog */}
       <Dialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
