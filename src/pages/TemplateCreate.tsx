@@ -203,13 +203,13 @@ const CustomNode: React.FC<NodeProps<CustomNodeData>> = ({ data, id }) => {
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className="relative w-96 rounded-xl border-2 border-gray-200 bg-white p-6 transition-all duration-150 ease-in-out hover:cursor-grab hover:border-blue-300 hover:shadow-md">
+          <div className="relative w-64 rounded-xl border-2 border-gray-200 bg-white p-6 transition-all duration-150 ease-in-out hover:cursor-grab hover:border-blue-300 hover:shadow-md xl:w-96">
             <Handle
               type="target"
               className="absolute -top-2 h-3.5 w-3.5 bg-gray-700"
               position={Position.Top}
             />
-            <h3 className="text-center text-xl font-medium tracking-wide">
+            <h3 className="text-center text-sm font-medium tracking-wide xl:text-xl">
               {data.label}
             </h3>
             <Handle
@@ -311,7 +311,7 @@ const TemplateCreate: React.FC = () => {
     );
 
     if (nodesWithNoSource.length !== 1) {
-      toast.error('Template must have exactly one starting node.', {
+      toast.error('Template must have exactly one starting stage.', {
         position: 'top-right',
       });
       return false;
@@ -474,6 +474,32 @@ const TemplateCreate: React.FC = () => {
     event.dataTransfer.dropEffect = 'move';
   }, []);
 
+  const addNodeToCanvas = useCallback(
+    (nodeData: NodeData) => {
+      if (!reactFlowInstance) return;
+
+      const position = reactFlowInstance.project({
+        x: Math.random() * 500,
+        y: Math.random() * 500,
+      });
+
+      const newNode: CustomNode = {
+        id: getId(nodeData.title),
+        type: 'custom',
+        position: position,
+        data: {
+          label: nodeData.title,
+          description: nodeData.description,
+          onDelete: onNodeDelete,
+        } as CustomNodeData,
+      };
+
+      setNodes((nds) => nds.concat(newNode));
+      setSidebarNodes((prev) => prev.filter((n) => n.id !== nodeData.id));
+    },
+    [reactFlowInstance, setNodes, onNodeDelete],
+  );
+
   return (
     <div className="flex h-screen">
       {/* Sidebar */}
@@ -517,6 +543,7 @@ const TemplateCreate: React.FC = () => {
                       className="mb-3 cursor-grab bg-white transition-all duration-150 ease-in-out hover:bg-gray-50 hover:shadow-md"
                       draggable
                       onDragStart={(event) => onDragStart(event, node)}
+                      onClick={() => addNodeToCanvas(node)}
                     >
                       <CardHeader>
                         <CardTitle className="text-sm font-normal xl:text-lg xl:font-medium">
