@@ -1,0 +1,99 @@
+{
+  "templateId": "template01_8",
+  "templateName": "template01",
+  "nodes": [
+    {
+      "id": "background_check_0",
+      "data": {
+        "label": "Background Check",
+        "description": "A background check is in progress for the candidate."
+      }
+    },
+    {
+      "id": "document_verification_1",
+      "data": {
+        "label": "Document Verification",
+        "description": "The candidate’s documents are being verified."
+      }
+    },
+    {
+      "id": "final_offer_2",
+      "data": {
+        "label": "Final Offer",
+        "description": "A final job offer is extended to the candidate."
+      }
+    },
+    {
+      "id": "hr_interview_3",
+      "data": {
+        "label": "HR Interview",
+        "description": "The candidate is scheduled for an HR interview."
+      }
+    },
+    {
+      "id": "initial_screening_4",
+      "data": {
+        "label": "Initial Screening",
+        "description": "The candidate is undergoing initial screening for eligibility."
+      }
+    },
+    {
+      "id": "medical_examination_5",
+      "data": {
+        "label": "Medical Examination",
+        "description": "The candidate is undergoing a medical examination."
+      }
+    },
+    {
+      "id": "onboarding_6",
+      "data": {
+        "label": "Onboarding",
+        "description": "The candidate has joined the company and is undergoing onboarding."
+      }
+    },
+    {
+      "id": "visa_processing_7",
+      "data": {
+        "label": "Visa Processing",
+        "description": "Visa processing has started for the candidate."
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "reactflow__edge-background_check_0-document_verification_1",
+      "source": "background_check_0",
+      "target": "document_verification_1"
+    },
+    {
+      "id": "reactflow__edge-document_verification_1-final_offer_2",
+      "source": "document_verification_1",
+      "target": "final_offer_2"
+    },
+    {
+      "id": "reactflow__edge-final_offer_2-hr_interview_3",
+      "source": "final_offer_2",
+      "target": "hr_interview_3"
+    },
+    {
+      "id": "reactflow__edge-final_offer_2-initial_screening_4",
+      "source": "final_offer_2",
+      "target": "initial_screening_4"
+    },
+    {
+      "id": "reactflow__edge-initial_screening_4-medical_examination_5",
+      "source": "initial_screening_4",
+      "target": "medical_examination_5"
+    },
+    {
+      "id": "reactflow__edge-medical_examination_5-onboarding_6",
+      "source": "medical_examination_5",
+      "target": "onboarding_6"
+    },
+    {
+      "id": "reactflow__edge-onboarding_6-visa_processing_7",
+      "source": "onboarding_6",
+      "target": "visa_processing_7"
+    }
+  ]
+}

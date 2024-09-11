@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
+// import { useNavigate } from 'react-router-dom';
 import ReactFlow, {
   ReactFlowProvider,
   Background,
@@ -68,7 +69,7 @@ type CustomNode = Node<CustomNodeData>;
 const initialNodes: NodeData[] = [
   {
     id: '1',
-    title: 'Application Received and Not Received Maybe Received',
+    title: 'Application Received',
     description: 'The candidate’s application has been received.',
   },
   {
@@ -354,6 +355,15 @@ const TemplateCreate: React.FC = () => {
         pauseOnHover: true,
         draggable: true,
       });
+      const newTab = window.open('/stage-status-update', '_blank');
+      if (newTab) {
+        newTab.onload = () => {
+          newTab.postMessage(
+            { type: 'TEMPLATE_DATA', payload: filteredFlow },
+            '*',
+          );
+        };
+      }
     }
   };
 

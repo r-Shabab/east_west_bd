@@ -1,0 +1,92 @@
+{
+  "templateId": "testing-template-1_6",
+  "templateName": "testing-template-1",
+  "nodes": [
+    {
+      "id": "application_received_and_not_received_maybe_received_0",
+      "type": "custom",
+      "data": {
+        "label": "Application Received and Not Received Maybe Received",
+        "description": "The candidate’s application has been received."
+      }
+    },
+    {
+      "id": "background_check_1",
+      "type": "custom",
+      "data": {
+        "label": "Background Check",
+        "description": "A background check is in progress for the candidate."
+      }
+    },
+    {
+      "id": "document_verification_2",
+      "type": "custom",
+      "data": {
+        "label": "Document Verification",
+        "description": "The candidate’s documents are being verified."
+      }
+    },
+    {
+      "id": "final_offer_3",
+      "type": "custom",
+      "data": {
+        "label": "Final Offer",
+        "description": "A final job offer is extended to the candidate."
+      }
+    },
+    {
+      "id": "hr_interview_4",
+      "type": "custom",
+      "data": {
+        "label": "HR Interview",
+        "description": "The candidate is scheduled for an HR interview."
+      }
+    },
+    {
+      "id": "initial_screening_5",
+      "type": "custom",
+      "data": {
+        "label": "Initial Screening",
+        "description": "The candidate is undergoing initial screening for eligibility."
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "reactflow__edge-application_received_and_not_received_maybe_received_0-background_check_1",
+      "source": "application_received_and_not_received_maybe_received_0",
+      "target": "background_check_1",
+      "type": "custom"
+    },
+    {
+      "id": "reactflow__edge-application_received_and_not_received_maybe_received_0-document_verification_2",
+      "source": "application_received_and_not_received_maybe_received_0",
+      "target": "document_verification_2",
+      "type": "custom"
+    },
+    {
+      "id": "reactflow__edge-document_verification_2-final_offer_3",
+      "source": "document_verification_2",
+      "target": "final_offer_3",
+      "type": "custom"
+    },
+    {
+      "id": "reactflow__edge-final_offer_3-hr_interview_4",
+      "source": "final_offer_3",
+      "target": "hr_interview_4",
+      "type": "custom"
+    },
+    {
+      "id": "reactflow__edge-background_check_1-hr_interview_4",
+      "source": "background_check_1",
+      "target": "hr_interview_4",
+      "type": "custom"
+    },
+    {
+      "id": "reactflow__edge-hr_interview_4-initial_screening_5",
+      "source": "hr_interview_4",
+      "target": "initial_screening_5",
+      "type": "custom"
+    }
+  ]
+}
