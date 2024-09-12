@@ -247,7 +247,7 @@ const getId = (label: string) =>
   `${label.replace(/\s+/g, '_').toLowerCase()}_${id++}`;
 
 const TemplateCreate: React.FC = () => {
-  const [nodes, setNodes, onNodesChange] = useNodesState<CustomNode>([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge<CustomEdgeData>>(
     [],
   );
@@ -470,7 +470,7 @@ const TemplateCreate: React.FC = () => {
         } as CustomNodeData,
       };
 
-      setNodes((nds) => nds.concat(newNode));
+      setNodes((nds) => nds.concat(newNode as Node));
       setSidebarNodes((prev) => prev.filter((n) => n.id !== nodeData.id));
     },
     [reactFlowInstance, setNodes, onNodeDelete],
@@ -512,7 +512,7 @@ const TemplateCreate: React.FC = () => {
         } as CustomNodeData,
       };
 
-      setNodes((nds) => nds.concat(newNode));
+      setNodes((nds) => nds.concat(newNode as Node));
       setSidebarNodes((prev) => prev.filter((n) => n.id !== nodeData.id));
     },
     [reactFlowInstance, nodes, onNodeDelete, setNodes],

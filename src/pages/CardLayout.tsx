@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, ChangeEvent } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -30,7 +29,7 @@ import { FiCheckCircle as CompletedIcon } from 'react-icons/fi';
 import { IoPauseCircle as PausedIcon } from 'react-icons/io5';
 import { MdCancelPresentation as CanceledIcon } from 'react-icons/md';
 import { IconType } from 'react-icons';
-import { Handle, Position, ReactFlowProvider } from '@xyflow/react';
+// import { Handle, Position, ReactFlowProvider } from '@xyflow/react';
 
 type StatusOption = {
   label: string;
@@ -74,12 +73,19 @@ interface CardLayoutProps {
   label: string;
   description: string;
   initialStatus: string;
+  onStatusUpdate: (
+    newStatus: string,
+    passportStatus: string,
+    additionalInfo: string,
+    fileName: string | null,
+  ) => void;
 }
 
 const CardLayout: React.FC<CardLayoutProps> = ({
   label,
   description,
   initialStatus,
+  onStatusUpdate,
 }) => {
   const [selectedStatus, setSelectedStatus] = useState<string>(initialStatus);
   const [selectedPassportStatus, setSelectedPassportStatus] =
@@ -102,10 +108,12 @@ const CardLayout: React.FC<CardLayoutProps> = ({
 
   const handleUpdateClick = () => {
     setSelectedStatus(tempStatus);
-    console.log(`Status updated to: ${tempStatus}`);
-    console.log(`Passport status: ${selectedPassportStatus}`);
-    console.log(`Additional info: ${textFieldValue}`);
-    if (file) console.log(`File selected: ${file.name}`);
+    onStatusUpdate(
+      tempStatus,
+      selectedPassportStatus,
+      textFieldValue,
+      file ? file.name : null,
+    );
     setIsDialogOpen(false);
   };
 
@@ -116,114 +124,86 @@ const CardLayout: React.FC<CardLayoutProps> = ({
 
   return (
     <>
-      <ReactFlowProvider>
-        <Handle
-          type="target"
-          position={Position.Left}
-          style={{
-            background: 'transparent',
-            width: 0,
-            height: 0,
-            border: 'none',
-          }}
-          onConnect={(params) => console.log('handle onConnect', params)}
-        />
-        <Card
-          className={`z-0 h-[120px] w-[400px] cursor-pointer flex-col space-y-4 p-4 shadow-md`}
-          style={{ borderWidth: '4px', borderColor: currentStatusColor }}
-          onClick={() => setIsDialogOpen(true)}
-        >
-          <div className="flex space-x-4">
-            <div
-              className={`flex h-20 w-20 items-center justify-center rounded-md`}
-              style={{ backgroundColor: currentStatusColor, opacity: 0.7 }}
-            >
-              <StatusIcon className={`h-12 w-12 text-white`} />
-            </div>
-            <div className="flex-col space-y-2">
-              <h3 className="mb-2 text-2xl font-bold">{label}</h3>
-              <Separator />
-              <p className="text-lg font-semibold">
-                Status:{' '}
-                <span style={{ color: currentStatusColor }}>
-                  {selectedStatus}
-                </span>
-              </p>
-            </div>
+      <Card
+        className={`z-0 h-[120px] w-[400px] cursor-pointer flex-col space-y-4 p-4 shadow-md`}
+        style={{ borderWidth: '4px', borderColor: currentStatusColor }}
+        onClick={() => setIsDialogOpen(true)}
+      >
+        <div className="flex space-x-4">
+          <div
+            className={`flex h-20 w-20 items-center justify-center rounded-md`}
+            style={{ backgroundColor: currentStatusColor, opacity: 0.7 }}
+          >
+            <StatusIcon className={`h-12 w-12 text-white`} />
           </div>
-        </Card>
+          <div className="flex-col space-y-2">
+            <h3 className="mb-2 text-2xl font-bold">{label}</h3>
+            <Separator />
+            <p className="text-lg font-semibold">
+              Status:{' '}
+              <span style={{ color: currentStatusColor }}>
+                {selectedStatus}
+              </span>
+            </p>
+          </div>
+        </div>
+      </Card>
 
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Update Stage: {label}</DialogTitle>
-              <DialogDescription>{description}</DialogDescription>
-            </DialogHeader>
-            <div className="mt-4 space-y-4">
-              <Select value={tempStatus} onValueChange={handleStatusChange}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  {statusOptions.map((option) => (
-                    <SelectItem key={option.label} value={option.label}>
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Update Stage: {label}</DialogTitle>
+            <DialogDescription>{description}</DialogDescription>
+          </DialogHeader>
+          <div className="mt-4 space-y-4">
+            <Select value={tempStatus} onValueChange={handleStatusChange}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent>
+                {statusOptions.map((option) => (
+                  <SelectItem key={option.label} value={option.label}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={selectedPassportStatus}
+              onValueChange={handlePassportStatusChange}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select passport status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Passport Status</SelectLabel>
+                  {passportOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
                       {option.label}
                     </SelectItem>
                   ))}
-                </SelectContent>
-              </Select>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
 
-              <Select
-                value={selectedPassportStatus}
-                onValueChange={handlePassportStatusChange}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select passport status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectLabel>Passport Status</SelectLabel>
-                    {passportOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
+            <Input
+              type="text"
+              placeholder="Additional Information"
+              value={textFieldValue}
+              onChange={(e) => setTextFieldValue(e.target.value)}
+              className="h-16 w-full"
+            />
 
-              <Input
-                type="text"
-                placeholder="Additional Information"
-                value={textFieldValue}
-                onChange={(e) => setTextFieldValue(e.target.value)}
-                className="h-16 w-full"
-              />
+            <input type="file" onChange={handleFileChange} className="w-full" />
 
-              <input
-                type="file"
-                onChange={handleFileChange}
-                className="w-full"
-              />
-
-              <Button className="mt-2 w-full" onClick={handleUpdateClick}>
-                Update Status
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-        <Handle
-          type="source"
-          position={Position.Right}
-          style={{
-            background: 'transparent',
-            width: 0,
-            height: 0,
-            border: 'none',
-          }}
-          onConnect={(params) => console.log('handle onConnect', params)}
-        />
-      </ReactFlowProvider>
+            <Button className="mt-2 w-full" onClick={handleUpdateClick}>
+              Update Status
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

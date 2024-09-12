@@ -7,6 +7,7 @@ import ReactFlow, {
   useEdgesState,
   NodeProps,
   ConnectionLineType,
+  Handle,
 } from 'reactflow';
 import dagre from 'dagre';
 import 'reactflow/dist/style.css';
@@ -69,15 +70,31 @@ const getLayoutedElements = (
   return { nodes: layoutedNodes, edges: layoutedEdges };
 };
 
-const CustomCardNode: React.FC<NodeProps> = ({ data }) => {
+const CustomCardNode: React.FC<NodeProps> = ({ data, id }) => {
   return (
     <>
       <div style={{ width: nodeWidth, height: nodeHeight }}>
+        <Handle type="target" position={Position.Left} id={`${id}-target`} />
         <CardLayout
           label={data.label}
           description={data.description}
           initialStatus={data.status || 'Active'}
+          onStatusUpdate={(
+            newStatus: any,
+            passportStatus: any,
+            additionalInfo: any,
+            fileName: any,
+          ) => {
+            return data.onStatusUpdate(
+              id,
+              newStatus,
+              passportStatus,
+              additionalInfo,
+              fileName,
+            );
+          }}
         />
+        <Handle type="source" position={Position.Right} id={`${id}-source`} />
       </div>
     </>
   );
@@ -92,19 +109,66 @@ const StageStatusUpdate: React.FC = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
-  const processNodes = useCallback((inputNodes: Node[]) => {
-    return inputNodes.map((node) => ({
-      ...node,
-      type: 'custom', // Set all nodes to use our custom type
-      data: {
-        ...node.data,
-        label: node.data.label,
-        description: node.data.description,
-        status: 'Active', // Set an initial status
-      },
-      style: { width: nodeWidth, height: nodeHeight },
-    }));
-  }, []);
+  const processNodes = useCallback(
+    (inputNodes: Node[]) => {
+      return inputNodes.map((node) => ({
+        ...node,
+        type: 'custom',
+        data: {
+          ...node.data,
+          label: node.data.label,
+          description: node.data.description,
+          status: 'Active',
+          onStatusUpdate: (
+            id: string,
+            newStatus: string,
+            passportStatus: string,
+            additionalInfo: string,
+            fileName: string | null,
+          ) => {
+            setNodes((prevNodes) => {
+              const updatedNodes = prevNodes.map((n) => {
+                if (n.id === id) {
+                  return {
+                    ...n,
+                    data: {
+                      ...n.data,
+                      status: newStatus,
+                      passportStatus,
+                      additionalInfo,
+                      fileName,
+                    },
+                  };
+                }
+                return n;
+              });
+
+              // Log the updated JSON
+              const updatedTemplateData = {
+                ...templateData!,
+                nodes: updatedNodes.map(({ id, data }) => ({
+                  id,
+                  data: {
+                    label: data.label,
+                    description: data.description,
+                    status: data.status,
+                    passportStatus: data.passportStatus,
+                    additionalInfo: data.additionalInfo,
+                    fileName: data.fileName,
+                  },
+                })),
+              };
+              console.log(JSON.stringify(updatedTemplateData, null, 2));
+
+              return updatedNodes;
+            });
+          },
+        },
+        style: { width: nodeWidth, height: nodeHeight },
+      }));
+    },
+    [setNodes, templateData],
+  );
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -141,8 +205,13 @@ const StageStatusUpdate: React.FC = () => {
           Template Name: {templateData.templateName}
         </h1>
       </div>
-      <div className="mx-10 overflow-x-auto overflow-y-hidden rounded-lg bg-gray-50">
-        <div style={{ width: `${nodes.length * nodeWidth}px`, height: '80vh' }}>
+      <div className="mx-4 overflow-x-auto overflow-y-hidden rounded-lg bg-gradient-to-b from-slate-100 to-slate-50">
+        <div
+          style={{
+            width: `${nodes.length * nodeWidth}px`,
+            height: '70vh',
+          }}
+        >
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -157,9 +226,8 @@ const StageStatusUpdate: React.FC = () => {
             zoomOnPinch={false}
             zoomOnDoubleClick={false}
             preventScrolling={true}
-            minZoom={0.5}
-            maxZoom={1.5}
-            fitView
+            fitView={true}
+            fitViewOptions={{ padding: 0.15 }}
             attributionPosition="bottom-left"
             connectionLineType={ConnectionLineType.Bezier}
           />
