@@ -17,7 +17,7 @@ import ReactFlow, {
   Handle,
   Position,
   ReactFlowInstance,
-  getBezierPath,
+  getSmoothStepPath,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { LuSearchX as SearchFailed } from 'react-icons/lu';
@@ -155,10 +155,9 @@ const CustomEdge: React.FC<EdgeProps<CustomEdgeData>> = ({
   targetY,
   sourcePosition,
   targetPosition,
-  style = {},
   data,
 }) => {
-  const [edgePath, labelX, labelY] = getBezierPath({
+  const [edgePath, labelX, labelY] = getSmoothStepPath({
     sourceX,
     sourceY,
     sourcePosition,
@@ -169,11 +168,27 @@ const CustomEdge: React.FC<EdgeProps<CustomEdgeData>> = ({
 
   return (
     <>
+      <svg>
+        <defs>
+          <marker
+            id="arrowhead"
+            markerWidth="20"
+            markerHeight="14"
+            refX="10"
+            refY="3.5"
+            orient="auto"
+            markerUnits="strokeWidth"
+          >
+            <polygon points="0 0, 10 3.5, 0 7" fill="black" />
+          </marker>
+        </defs>
+      </svg>
+
       <path
         id={id}
-        style={style}
-        className="react-flow__edge-path"
+        className="react-flow__edge-path stroke-2"
         d={edgePath}
+        markerEnd="url(#arrowhead)"
       />
       <foreignObject
         width={25}
@@ -598,7 +613,7 @@ const TemplateCreate: React.FC = () => {
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
             snapToGrid={true}
-            snapGrid={[150, 150]}
+            snapGrid={[150, 200]}
             minZoom={0.5}
             maxZoom={1.5}
             panOnDrag={true}
