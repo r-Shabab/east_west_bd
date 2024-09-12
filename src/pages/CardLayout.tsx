@@ -4,18 +4,7 @@ import { Separator } from '@/components/ui/separator';
 import { statusOptions } from '../constants/CardLayoutConstants';
 import StatusIcon from '../components/CardComponents/StatusIcon';
 import UpdateDialog from '../components/CardComponents/UpdateDialog';
-
-interface CardLayoutProps {
-  label: string;
-  description: string;
-  initialStatus: string;
-  onStatusUpdate: (
-    newStatus: string,
-    passportStatus: string,
-    additionalInfo: string,
-    fileName: string | null,
-  ) => void;
-}
+import { CardLayoutProps } from '../types/CardLayoutTypes';
 
 const CardLayout: React.FC<CardLayoutProps> = ({
   label,
@@ -39,7 +28,7 @@ const CardLayout: React.FC<CardLayoutProps> = ({
 
   const currentStatusColor =
     statusOptions.find((option) => option.label === selectedStatus)?.color ||
-    '#047857';
+    '#fff';
 
   return (
     <>

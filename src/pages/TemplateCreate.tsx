@@ -386,7 +386,7 @@ const TemplateCreate: React.FC = () => {
     setNodes([]);
     setEdges([]);
     setSidebarNodes(initialNodes);
-    toast.warning('Your changes have been discarded.', {
+    toast.info('Your changes have been discarded.', {
       position: 'top-right',
       autoClose: 3000,
       hideProgressBar: false,
@@ -503,12 +503,12 @@ const TemplateCreate: React.FC = () => {
       if (!reactFlowInstance) return;
 
       const centerX = 750; // Set x position to a fixed value
-      let centerY = 150; // Initial y position
+      let centerY = 200; // Initial y position
 
       if (nodes.length > 0) {
         // Get the y position of the last node
         const lastNode = nodes[nodes.length - 1];
-        centerY = lastNode.position.y + nodeGap; // Increment y position by 150
+        centerY = lastNode.position.y + nodeGap;
       }
 
       const position = {
