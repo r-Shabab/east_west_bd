@@ -47,7 +47,7 @@ import 'react-toastify/dist/ReactToastify.css';
 // Define the structure for a node
 interface NodeData {
   id: string;
-  title: string;
+  label: string;
   description: string;
 }
 
@@ -69,79 +69,79 @@ type CustomNode = Node<CustomNodeData>;
 const initialNodes: NodeData[] = [
   {
     id: '1',
-    title: 'Application Received',
+    label: 'Application Received',
     description: 'The candidate’s application has been received.',
   },
   {
     id: '2',
-    title: 'Initial Screening',
+    label: 'Initial Screening',
     description:
       'The candidate is undergoing initial screening for eligibility.',
   },
   {
     id: '3',
-    title: 'Preliminary Interview',
+    label: 'Preliminary Interview',
     description: 'A preliminary interview is scheduled for the candidate.',
   },
   {
     id: '4',
-    title: 'Skills Assessment',
+    label: 'Skills Assessment',
     description: 'The candidate is undergoing a skills assessment.',
   },
   {
     id: '5',
-    title: 'HR Interview',
+    label: 'HR Interview',
     description: 'The candidate is scheduled for an HR interview.',
   },
   {
     id: '6',
-    title: 'Technical Interview',
+    label: 'Technical Interview',
     description: 'A technical interview is being conducted.',
   },
   {
     id: '7',
-    title: 'Background Check',
+    label: 'Background Check',
     description: 'A background check is in progress for the candidate.',
   },
   {
     id: '8',
-    title: 'Medical Examination',
+    label: 'Medical Examination',
     description: 'The candidate is undergoing a medical examination.',
   },
   {
     id: '9',
-    title: 'Document Verification',
+    label: 'Document Verification',
     description: 'The candidate’s documents are being verified.',
   },
   {
     id: '10',
-    title: 'Visa Processing',
+    label: 'Visa Processing',
     description: 'Visa processing has started for the candidate.',
   },
   {
     id: '11',
-    title: 'Passport Submission',
+    label: 'Passport Submission',
     description:
       'The candidate has submitted their passport for visa stamping.',
   },
   {
     id: '12',
-    title: 'Visa Approval',
+    label: 'Visa Approval',
     description: 'The candidate’s visa has been approved.',
   },
   {
     id: '13',
-    title: 'Final Offer',
+    label: 'Final Offer',
     description: 'A final job offer is extended to the candidate.',
   },
   {
     id: '14',
-    title: 'Travel Arrangement',
+    label: 'Travel Arrangement',
     description: 'Travel arrangements are being made for the candidate.',
   },
   {
     id: '15',
-    title: 'Onboarding',
+    label: 'Onboarding',
     description:
       'The candidate has joined the company and is undergoing onboarding.',
   },
@@ -204,7 +204,7 @@ const CustomNode: React.FC<NodeProps<CustomNodeData>> = ({ data, id }) => {
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className="relative w-64 rounded-xl border-2 border-gray-200 bg-white p-6 transition-all duration-150 ease-in-out hover:cursor-grab hover:border-blue-300 hover:shadow-md xl:w-96">
+          <Card className="relative w-64 rounded-xl border-2 border-gray-200 bg-white p-6 transition-all duration-150 ease-in-out hover:cursor-grab hover:border-blue-300 hover:shadow-md xl:w-96">
             <Handle
               type="target"
               className="absolute -top-2 h-3.5 w-3.5 bg-gray-700"
@@ -224,7 +224,7 @@ const CustomNode: React.FC<NodeProps<CustomNodeData>> = ({ data, id }) => {
             >
               <Close size={14} />
             </button>
-          </div>
+          </Card>
         </TooltipTrigger>
         <TooltipContent side="right" sideOffset={5}>
           <p>{data.description}</p>
@@ -262,13 +262,13 @@ const TemplateCreate: React.FC = () => {
   const [templateName, setTemplateName] = useState('');
 
   const sortedSidebarNodes = useMemo(() => {
-    return [...sidebarNodes].sort((a, b) => a.title.localeCompare(b.title));
+    return [...sidebarNodes].sort((a, b) => a.label.localeCompare(b.label));
   }, [sidebarNodes]);
 
   const filteredNodes = useMemo(() => {
     return sidebarNodes.filter(
       (node) =>
-        node.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        node.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
         node.description.toLowerCase().includes(searchTerm.toLowerCase()),
     );
   }, [sidebarNodes, searchTerm]);
@@ -397,13 +397,13 @@ const TemplateCreate: React.FC = () => {
           setSidebarNodes((prev) => {
             const index = initialNodes.findIndex(
               (n) =>
-                n.title ===
+                n.label ===
                 (deletedNode.data as unknown as CustomNodeData).label,
             );
             const newSidebarNodes = [...prev];
             newSidebarNodes.splice(index, 0, {
               id: deletedNode.id,
-              title: (deletedNode.data as unknown as CustomNodeData).label,
+              label: (deletedNode.data as unknown as CustomNodeData).label,
               description: (deletedNode.data as unknown as CustomNodeData)
                 .description,
             });
@@ -460,11 +460,11 @@ const TemplateCreate: React.FC = () => {
       });
 
       const newNode: CustomNode = {
-        id: getId(nodeData.title),
+        id: getId(nodeData.label),
         type: 'custom',
         position: position || { x: 0, y: 0 },
         data: {
-          label: nodeData.title,
+          label: nodeData.label,
           description: nodeData.description,
           onDelete: onNodeDelete,
         } as CustomNodeData,
@@ -481,26 +481,32 @@ const TemplateCreate: React.FC = () => {
     event.dataTransfer.dropEffect = 'move';
   }, []);
 
+  const nodeGap = 200;
+
   const addNodeToCanvas = useCallback(
     (nodeData: NodeData) => {
       if (!reactFlowInstance) return;
 
-      const screenWidth = window.innerWidth;
-      const screenHeight = window.innerHeight;
-      const centerX = screenWidth / 2;
-      const centerY = screenHeight / 2;
+      const centerX = 750; // Set x position to a fixed value
+      let centerY = 150; // Initial y position
 
-      const position = reactFlowInstance.screenToFlowPosition({
-        x: centerX + Math.floor(Math.random() * 600) - 300,
-        y: centerY + Math.floor(Math.random() * 600) - 300,
-      });
+      if (nodes.length > 0) {
+        // Get the y position of the last node
+        const lastNode = nodes[nodes.length - 1];
+        centerY = lastNode.position.y + nodeGap; // Increment y position by 150
+      }
+
+      const position = {
+        x: centerX,
+        y: centerY,
+      };
 
       const newNode: CustomNode = {
-        id: getId(nodeData.title),
+        id: getId(nodeData.label),
         type: 'custom',
         position: position,
         data: {
-          label: nodeData.title,
+          label: nodeData.label,
           description: nodeData.description,
           onDelete: onNodeDelete,
         } as CustomNodeData,
@@ -509,7 +515,7 @@ const TemplateCreate: React.FC = () => {
       setNodes((nds) => nds.concat(newNode));
       setSidebarNodes((prev) => prev.filter((n) => n.id !== nodeData.id));
     },
-    [reactFlowInstance, setNodes, onNodeDelete],
+    [reactFlowInstance, nodes, onNodeDelete, setNodes],
   );
 
   return (
@@ -559,7 +565,7 @@ const TemplateCreate: React.FC = () => {
                     >
                       <CardHeader>
                         <CardTitle className="text-sm font-normal xl:text-lg xl:font-medium">
-                          {node.title}
+                          {node.label}
                         </CardTitle>
                         {/* <CardContent>
                 <p>{node.description}</p>
@@ -592,13 +598,13 @@ const TemplateCreate: React.FC = () => {
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
             snapToGrid={true}
-            snapGrid={[175, 175]}
+            snapGrid={[150, 150]}
             minZoom={0.5}
             maxZoom={1.5}
             panOnDrag={true}
             zoomOnScroll={false}
             panOnScroll={true}
-            defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+            defaultViewport={{ x: 0, y: 0, zoom: 0.8 }}
             style={{
               backgroundColor: '#f9f9f9',
             }}
@@ -643,6 +649,7 @@ const TemplateCreate: React.FC = () => {
               placeholder="Enter template name"
               value={templateName}
               onChange={(e) => setTemplateName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleConfirm()}
             />
           )}
           <DialogFooter>

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, ChangeEvent } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,6 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -28,6 +30,7 @@ import { FiCheckCircle as CompletedIcon } from 'react-icons/fi';
 import { IoPauseCircle as PausedIcon } from 'react-icons/io5';
 import { MdCancelPresentation as CanceledIcon } from 'react-icons/md';
 import { IconType } from 'react-icons';
+import { Handle, Position, ReactFlowProvider } from '@xyflow/react';
 
 type StatusOption = {
   label: string;
@@ -67,14 +70,24 @@ const passportOptions = [
   { label: 'Passport Out', value: 'out' },
 ];
 
-const CardLayout: React.FC = () => {
-  const [selectedStatus, setSelectedStatus] = useState<string>('Active');
+interface CardLayoutProps {
+  label: string;
+  description: string;
+  initialStatus: string;
+}
+
+const CardLayout: React.FC<CardLayoutProps> = ({
+  label,
+  description,
+  initialStatus,
+}) => {
+  const [selectedStatus, setSelectedStatus] = useState<string>(initialStatus);
   const [selectedPassportStatus, setSelectedPassportStatus] =
     useState<string>('');
   const [textFieldValue, setTextFieldValue] = useState<string>('');
   const [file, setFile] = useState<File | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
-  const [tempStatus, setTempStatus] = useState<string>('Active');
+  const [tempStatus, setTempStatus] = useState<string>(initialStatus);
 
   const handleStatusChange = (value: string) => setTempStatus(value);
 
@@ -103,85 +116,114 @@ const CardLayout: React.FC = () => {
 
   return (
     <>
-      <Card
-        className={`m-4 w-96 cursor-pointer flex-col space-y-4 p-4 shadow-md`}
-        style={{ borderWidth: '4px', borderColor: currentStatusColor }}
-        onClick={() => setIsDialogOpen(true)}
-      >
-        <div className="flex space-x-4">
-          <div
-            className={`flex h-20 w-20 items-center justify-center rounded-md`}
-            style={{ backgroundColor: currentStatusColor, opacity: 0.7 }}
-          >
-            <StatusIcon className={`h-12 w-12 text-white`} />
-          </div>
-          <div className="flex-col space-y-2">
-            <h3 className="mb-2 text-2xl font-bold">Stage Name</h3>
-            <Separator />
-            <p className="text-lg font-semibold">
-              Status:{' '}
-              <span style={{ color: currentStatusColor }}>
-                {selectedStatus}
-              </span>
-            </p>
-          </div>
-        </div>
-      </Card>
-
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Update Stage: Stage Name</DialogTitle>
-          </DialogHeader>
-          <div className="mt-4 space-y-4">
-            <Select value={tempStatus} onValueChange={handleStatusChange}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select status" />
-              </SelectTrigger>
-              <SelectContent>
-                {statusOptions.map((option) => (
-                  <SelectItem key={option.label} value={option.label}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select
-              value={selectedPassportStatus}
-              onValueChange={handlePassportStatusChange}
+      <ReactFlowProvider>
+        <Handle
+          type="target"
+          position={Position.Left}
+          style={{
+            background: 'transparent',
+            width: 0,
+            height: 0,
+            border: 'none',
+          }}
+          onConnect={(params) => console.log('handle onConnect', params)}
+        />
+        <Card
+          className={`z-0 h-[120px] w-[400px] cursor-pointer flex-col space-y-4 p-4 shadow-md`}
+          style={{ borderWidth: '4px', borderColor: currentStatusColor }}
+          onClick={() => setIsDialogOpen(true)}
+        >
+          <div className="flex space-x-4">
+            <div
+              className={`flex h-20 w-20 items-center justify-center rounded-md`}
+              style={{ backgroundColor: currentStatusColor, opacity: 0.7 }}
             >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select passport status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectLabel>Passport Status</SelectLabel>
-                  {passportOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
+              <StatusIcon className={`h-12 w-12 text-white`} />
+            </div>
+            <div className="flex-col space-y-2">
+              <h3 className="mb-2 text-2xl font-bold">{label}</h3>
+              <Separator />
+              <p className="text-lg font-semibold">
+                Status:{' '}
+                <span style={{ color: currentStatusColor }}>
+                  {selectedStatus}
+                </span>
+              </p>
+            </div>
+          </div>
+        </Card>
+
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Update Stage: {label}</DialogTitle>
+              <DialogDescription>{description}</DialogDescription>
+            </DialogHeader>
+            <div className="mt-4 space-y-4">
+              <Select value={tempStatus} onValueChange={handleStatusChange}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {statusOptions.map((option) => (
+                    <SelectItem key={option.label} value={option.label}>
                       {option.label}
                     </SelectItem>
                   ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
+                </SelectContent>
+              </Select>
 
-            <Input
-              type="text"
-              placeholder="Additional Information"
-              value={textFieldValue}
-              onChange={(e) => setTextFieldValue(e.target.value)}
-              className="h-16 w-full"
-            />
+              <Select
+                value={selectedPassportStatus}
+                onValueChange={handlePassportStatusChange}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select passport status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Passport Status</SelectLabel>
+                    {passportOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
 
-            <input type="file" onChange={handleFileChange} className="w-full" />
+              <Input
+                type="text"
+                placeholder="Additional Information"
+                value={textFieldValue}
+                onChange={(e) => setTextFieldValue(e.target.value)}
+                className="h-16 w-full"
+              />
 
-            <Button className="mt-2 w-full" onClick={handleUpdateClick}>
-              Update Status
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+              <input
+                type="file"
+                onChange={handleFileChange}
+                className="w-full"
+              />
+
+              <Button className="mt-2 w-full" onClick={handleUpdateClick}>
+                Update Status
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+        <Handle
+          type="source"
+          position={Position.Right}
+          style={{
+            background: 'transparent',
+            width: 0,
+            height: 0,
+            border: 'none',
+          }}
+          onConnect={(params) => console.log('handle onConnect', params)}
+        />
+      </ReactFlowProvider>
     </>
   );
 };
